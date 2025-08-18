@@ -1,0 +1,5 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+python-dotenv==1.0.1
+binance-connector==3.6.1
+httpx==0.27.2
