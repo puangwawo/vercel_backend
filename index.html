@@ -5,38 +5,6 @@
 <title>Binance Liquidation Monitor — Live</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<script>
-  // Ganti dengan URL dari cell Cloudflare
-  const API_BASE = "https://essay-tongue-base-clinical.trycloudflare.com";
-
-  const qs = (s, el=document)=>el.querySelector(s);
-  const fmtNum = n=>n==null?'—':new Intl.NumberFormat().format(n);
-  const pill = txt=>{
-    const tones={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
-    return `<span class="badge ${tones[txt]||'bg-slate-200 text-slate-700'}">${txt||''}</span>`;
-  };
-
-  // ⬇️ penting: prefix semua request ke API_BASE
-  async function GET(path){
-    const url = API_BASE + path;
-    const r = await fetch(url, { headers:{'Accept':'application/json'}, cache:'no-store' });
-    if(!r.ok) throw new Error(url+' -> '+r.status);
-    return r.json();
-  }
-  async function POST(path, body){
-    const url = API_BASE + path;
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-    if(!r.ok) throw new Error(url+' -> '+r.status);
-    return r.json();
-  }
-
-  // tampilkan base yang dipakai di header kecil
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const el = document.querySelector('#apiBaseLabel');
-    if (el) el.textContent = API_BASE + '/';
-  });
-</script>
-
 <style>
   .card{border-radius:1rem;box-shadow:0 10px 30px rgba(0,0,0,.06)}
   .badge{border-radius:9999px;padding:.25rem .6rem;font-size:.75rem}
@@ -142,88 +110,86 @@
 </div>
 
 <script>
-const qs=(s,el=document)=>el.querySelector(s);
-const fmtNum=n=>n==null?'—':new Intl.NumberFormat().format(n);
-const pill=txt=>{const t={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
-  return `<span class="badge ${t[txt]||'bg-slate-200 text-slate-700'}">${txt||''}</span>`};
+  // >>>>>>>>> SET API BASE DI SINI <<<<<<<<<
+  const API_BASE = "https://essay-tongue-base-clinical.trycloudflare.com";
 
-const GET = p => fetch(p,{headers:{'Accept':'application/json'}, cache:'no-store'}).then(r=>r.json());
-const POST = (p,body)=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+  const qs=(s,el=document)=>el.querySelector(s);
+  const fmtNum=n=>n==null?'—':new Intl.NumberFormat().format(n);
+  const pill=txt=>{const t={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
+    return `<span class="badge ${t[txt]||'bg-slate-2 00 text-slate-700'}">${txt||''}</span>`};
 
-function renderStatus(st){
-  qs('#uptime').classList.remove('skeleton'); qs('#uptime').textContent=st.uptime||'—';
-  qs('#processed').classList.remove('skeleton'); qs('#processed').textContent=fmtNum(st.processed_today);
-  qs('#aiAcc').classList.remove('skeleton'); qs('#aiAcc').textContent=(st.ai_accuracy??'—')+'%';
-  qs('#provider').classList.remove('skeleton'); qs('#provider').textContent = 'binance';
-  qs('#tg').classList.remove('skeleton'); qs('#tg').textContent='99%';
-}
+  async function GET(path){
+    const url = API_BASE + path;
+    const r = await fetch(url,{headers:{'Accept':'application/json'}, cache:'no-store'});
+    if(!r.ok) throw new Error(url+' -> '+r.status);
+    return r.json();
+  }
+  async function POST(path, body){
+    const url = API_BASE + path;
+    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error(url+' -> '+r.status);
+    return r.json();
+  }
 
-function renderPrices(px){
-  qs('#provTiny').textContent = px.provider || '—';
-  const wrap=qs('#prices'); wrap.innerHTML='';
-  const order=['XRPUSDT','DOGEUSDT','PEPEUSDT'];
-  const fmt=v=> (v==null?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:8}));
-  order.forEach(sym=>{
-    wrap.innerHTML += `<div class="rounded-xl bg-indigo-50 p-3">
-      <div class="text-slate-500 text-xs">${sym}</div>
-      <div class="text-lg font-semibold">$ ${fmt(px.prices?.[sym])}</div></div>`;
-  });
-}
+  function renderStatus(st){
+    qs('#uptime').classList.remove('skeleton'); qs('#uptime').textContent=st.uptime||'—';
+    qs('#processed').classList.remove('skeleton'); qs('#processed').textContent=fmtNum(st.processed_today);
+    qs('#aiAcc').classList.remove('skeleton'); qs('#aiAcc').textContent=(st.ai_accuracy??'—')+'%';
+    qs('#provider').classList.remove('skeleton'); qs('#provider').textContent='binance';
+    qs('#tg').classList.remove('skeleton'); qs('#tg').textContent='99%';
+  }
 
-function renderSignals(an){
-  qs('#sigModel').textContent = an.model || '—';
-  const wrap=qs('#signals'); wrap.innerHTML='';
-  ['XRPUSDT','DOGEUSDT','PEPEUSDT'].forEach(sym=>{
-    const s = an.signals?.[sym] || {};
-    wrap.innerHTML += `<div class="rounded-xl bg-white p-3 shadow">
-      <div class="text-slate-500 text-xs mb-1">${sym}</div>
-      <div class="text-lg font-semibold">${s.recommendation||'—'}</div>
-      <div class="text-slate-500 text-xs">Conf: ${s.confidence??'—'}%</div></div>`;
-  });
-}
+  function renderPrices(px){
+    qs('#provTiny').textContent = px.provider || '—';
+    const wrap=qs('#prices'); wrap.innerHTML='';
+    const order=['XRPUSDT','DOGEUSDT','PEPEUSDT'];
+    const fmt=v=> (v==null?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:8}));
+    order.forEach(sym=>{
+      wrap.innerHTML += `<div class="rounded-xl bg-indigo-50 p-3">
+        <div class="text-slate-500 text-xs">${sym}</div>
+        <div class="text-lg font-semibold">$ ${fmt(px.prices?.[sym])}</div></div>`;
+    });
+  }
 
-function renderLiqs(arr){
-  qs('#liqsCount').textContent=`${arr.length} items`;
-  const tb=qs('#liqsTable'); tb.innerHTML='';
-  arr.forEach(e=>{
-    tb.innerHTML += `<tr class="border-t">
-      <td class="py-2 pr-4">${e.timestamp||'—'}</td>
-      <td class="py-2 pr-4 font-medium">${e.symbol||'—'}</td>
-      <td class="py-2 pr-4">${pill((e.side||'').toUpperCase())}</td>
-      <td class="py-2 pr-4">${e.price!=null?Number(e.price).toLocaleString(undefined,{maximumFractionDigits:8}):'—'}</td>
-      <td class="py-2 pr-4">${fmtNum(e.quantity)}</td>
-      <td class="py-2 pr-4">${pill((e.ai_recommendation||'').toUpperCase())} <span class="text-slate-400 text-xs">(${e.confidence??'—'}%)</span></td>
-    </tr>`;
-  });
-}
+  function renderSignals(an){
+    qs('#sigModel').textContent = an.model || '—';
+    const wrap=qs('#signals'); wrap.innerHTML='';
+    ['XRPUSDT','DOGEUSDT','PEPEUSDT'].forEach(sym=>{
+      const s = an.signals?.[sym] || {};
+      wrap.innerHTML += `<div class="rounded-xl bg-white p-3 shadow">
+        <div class="text-slate-500 text-xs mb-1">${sym}</div>
+        <div class="text-lg font-semibold">${s.recommendation||'—'}</div>
+        <div class="text-slate-500 text-xs">Conf: ${s.confidence??'—'}%</div></div>`;
+    });
+  }
 
-async function loadAll(){
-  const [st, px, an, liqs, pcfg, porders] = await Promise.all([
-    GET('/status'), GET('/prices'), GET('/analysis'), GET('/liquidations'),
-    GET('/paper/config'), GET('/paper/orders')
-  ]);
-  qs('#apiBaseLabel').textContent = location.origin + '/';
-  renderStatus(st); renderPrices(px); renderSignals(an); renderLiqs(liqs||[]);
-  qs('#paperStatus').textContent = pcfg?.enabled ? (pcfg.has_keys? 'Testnet: ready (keys)': 'Simulated mode') : 'Disabled';
-  const ul=qs('#ptList'); ul.innerHTML='';
-  (porders||[]).forEach(o=>{
-    const d=new Date(o.ts||Date.now()); const t=d.toISOString().replace('T',' ').slice(0,19);
-    ul.innerHTML += `<li><span class="text-slate-400">${t}</span> — <b>${o.symbol}</b> ${o.side} x ${o.quantity} <span class="text-slate-500">(${o.mode})</span></li>`;
-  });
-}
+  function renderLiqs(arr){
+    qs('#liqsCount').textContent=`${arr.length} items`;
+    const tb=qs('#liqsTable'); tb.innerHTML='';
+    arr.forEach(e=>{
+      tb.innerHTML += `<tr class="border-t">
+        <td class="py-2 pr-4">${e.timestamp||'—'}</td>
+        <td class="py-2 pr-4 font-medium">${e.symbol||'—'}</td>
+        <td class="py-2 pr-4">${pill((e.side||'').toUpperCase())}</td>
+        <td class="py-2 pr-4">${e.price!=null?Number(e.price).toLocaleString(undefined,{maximumFractionDigits:8}):'—'}</td>
+        <td class="py-2 pr-4">${fmtNum(e.quantity)}</td>
+        <td class="py-2 pr-4">${pill((e.ai_recommendation||'').toUpperCase())} <span class="text-slate-400 text-xs">(${e.confidence??'—'}%)</span></td>
+      </tr>`;
+    });
+  }
 
-document.getElementById('refreshBtn').addEventListener('click', loadAll);
-document.getElementById('ptSend').addEventListener('click', async ()=>{
-  const symbol = qs('#ptSymbol').value.trim();
-  const side   = qs('#ptSide').value.trim();
-  const qty    = Number(qs('#ptQty').value);
-  const out = await POST('/paper/order',{symbol, side, quantity: qty});
-  qs('#ptMsg').textContent = out.ok ? 'Order sent ('+(out.mode||'')+')' : ('Failed: ' + (out.error||''));
+  async function loadAll(){
+    const [st, px, an, liqs] = await Promise.all([
+      GET('/status'), GET('/prices'), GET('/analysis'), GET('/liquidations')
+    ]);
+    qs('#apiBaseLabel').textContent = API_BASE + '/';
+    renderStatus(st); renderPrices(px); renderSignals(an); renderLiqs(liqs||[]);
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadAll);
+  setInterval(loadAll, 15000);
+  lucide.createIcons();
   loadAll();
-});
-setInterval(loadAll, 15000);
-lucide.createIcons();
-loadAll();
 </script>
 </body>
 </html>
