@@ -30,8 +30,8 @@ MIN_TABLE_USD = float(os.getenv("MIN_TABLE_USD","0"))
 WINDOW_SEC = int(os.getenv("WINDOW_SEC","180"))  # 3 menit
 
 # Testnet trading (paper)
-BINANCE_API_KEY = os.getenv("BINANCE_API_KEY","")
-BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET","")
+BINANCE_API_KEY = os.getenv("7b159c78c7b4d2671a91495bdbbfa96ba08d1e06315a1609b46a9782d86b2d45","")
+BINANCE_API_SECRET = os.getenv("746efa9aa4afcb9055fe38c8b58ed5f5d6bddf3a910871ce584fca5150c3b960","")
 BINANCE_TESTNET = os.getenv("BINANCE_TESTNET","true").lower() == "true"
 
 # ========= STATE =========
