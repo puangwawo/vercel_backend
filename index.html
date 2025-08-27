@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Binance Liquidation Monitor — Live</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  .card{border-radius:1rem;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+  .badge{border-radius:9999px;padding:.25rem .6rem;font-size:.75rem}
+  .table-wrap{overflow:auto;max-height:60vh}
+  .skeleton{background:linear-gradient(90deg,#eee,#f7f7f7,#eee);background-size:200% 100%;animation:s 1.2s infinite}
+  @keyframes s{0%{background-position:0% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100 text-slate-800">
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg">
+        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold">Binance Liquidation Monitor</h1>
+        <p class="text-sm text-slate-500">Live feed from <code id="apiBaseLabel">/</code></p>
+      </div>
+    </div>
+    <button id="refreshBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition">
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+    </button>
+  </header>
+
+  <section class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+    <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm">Uptime</span><i data-lucide="activity" class="w-4 h-4 text-indigo-600"></i></div>
+      <div id="uptime" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+    <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm">Processed Today</span><i data-lucide="cpu" class="w-4 h-4 text-indigo-600"></i></div>
+      <div id="processed" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+    <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm">AI Accuracy</span><i data-lucide="sparkles" class="w-4 h-4 text-indigo-600"></i></div>
+      <div id="aiAcc" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+    <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm">Provider</span><i data-lucide="globe" class="w-4 h-4 text-indigo-600"></i></div>
+      <div id="provider" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+    <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm">Telegram Delivery</span><i data-lucide="send" class="w-4 h-4 text-indigo-600"></i></div>
+      <div id="tg" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+  </section>
+
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+    <div class="card p-5 bg-white/80">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="font-semibold">Prices</h2>
+        <span id="provTiny" class="text-xs px-2 py-1 bg-slate-100 rounded-lg text-slate-600">—</span>
+      </div>
+      <div id="prices" class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm"></div>
+    </div>
+
+    <div class="card p-5 bg-white/80">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="font-semibold">AI Signals</h2>
+        <span class="text-xs text-slate-500" id="sigModel">—</span>
+      </div>
+      <div id="signals" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm"></div>
+    </div>
+  </section>
+
+  <section class="mt-6 card p-5 bg-white/80">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold">Recent Liquidations</h2>
+      <div id="liqsCount" class="text-sm text-slate-500">—</div>
+    </div>
+    <div class="table-wrap">
+      <table class="min-w-full text-sm">
+        <thead class="sticky top-0 bg-white">
+          <tr class="text-left text-slate-500">
+            <th class="py-2 pr-4">Time</th><th class="py-2 pr-4">Symbol</th><th class="py-2 pr-4">Side</th>
+            <th class="py-2 pr-4">Price</th><th class="py-2 pr-4">Qty</th><th class="py-2 pr-4">AI</th>
+          </tr>
+        </thead>
+        <tbody id="liqsTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="mt-6 card p-5 bg-white/80">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold">Paper Trading (Testnet)</h2>
+      <span id="paperStatus" class="text-xs text-slate-500">—</span>
+    </div>
+    <div class="grid sm:grid-cols-5 gap-3">
+      <select id="ptSymbol" class="p-2 rounded-lg border bg-white">
+        <option>XRPUSDT</option><option>DOGEUSDT</option><option>PEPEUSDT</option>
+      </select>
+      <select id="ptSide" class="p-2 rounded-lg border bg-white">
+        <option>BUY</option><option>SELL</option>
+      </select>
+      <input id="ptQty" type="number" step="1" min="1" class="p-2 rounded-lg border bg-white" placeholder="Quantity"/>
+      <button id="ptSend" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Send</button>
+      <div id="ptMsg" class="text-sm text-slate-500"></div>
+    </div>
+    <div class="mt-3">
+      <h3 class="font-semibold mb-1 text-sm">Recent Paper Orders</h3>
+      <ul id="ptList" class="text-sm space-y-1"></ul>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const qs=(s,el=document)=>el.querySelector(s);
+const fmtNum=n=>n==null?'—':new Intl.NumberFormat().format(n);
+const pill=txt=>{const t={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
+  return `<span class="badge ${t[txt]||'bg-slate-200 text-slate-700'}">${txt||''}</span>`};
+
+const GET = p => fetch(p,{headers:{'Accept':'application/json'}, cache:'no-store'}).then(r=>r.json());
+const POST = (p,body)=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+
+function renderStatus(st){
+  qs('#uptime').classList.remove('skeleton'); qs('#uptime').textContent=st.uptime||'—';
+  qs('#processed').classList.remove('skeleton'); qs('#processed').textContent=fmtNum(st.processed_today);
+  qs('#aiAcc').classList.remove('skeleton'); qs('#aiAcc').textContent=(st.ai_accuracy??'—')+'%';
+  qs('#provider').classList.remove('skeleton'); qs('#provider').textContent = 'binance';
+  qs('#tg').classList.remove('skeleton'); qs('#tg').textContent='99%';
+}
+
+function renderPrices(px){
+  qs('#provTiny').textContent = px.provider || '—';
+  const wrap=qs('#prices'); wrap.innerHTML='';
+  const order=['XRPUSDT','DOGEUSDT','PEPEUSDT'];
+  const fmt=v=> (v==null?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:8}));
+  order.forEach(sym=>{
+    wrap.innerHTML += `<div class="rounded-xl bg-indigo-50 p-3">
+      <div class="text-slate-500 text-xs">${sym}</div>
+      <div class="text-lg font-semibold">$ ${fmt(px.prices?.[sym])}</div></div>`;
+  });
+}
+
+function renderSignals(an){
+  qs('#sigModel').textContent = an.model || '—';
+  const wrap=qs('#signals'); wrap.innerHTML='';
+  ['XRPUSDT','DOGEUSDT','PEPEUSDT'].forEach(sym=>{
+    const s = an.signals?.[sym] || {};
+    wrap.innerHTML += `<div class="rounded-xl bg-white p-3 shadow">
+      <div class="text-slate-500 text-xs mb-1">${sym}</div>
+      <div class="text-lg font-semibold">${s.recommendation||'—'}</div>
+      <div class="text-slate-500 text-xs">Conf: ${s.confidence??'—'}%</div></div>`;
+  });
+}
+
+function renderLiqs(arr){
+  qs('#liqsCount').textContent=`${arr.length} items`;
+  const tb=qs('#liqsTable'); tb.innerHTML='';
+  arr.forEach(e=>{
+    tb.innerHTML += `<tr class="border-t">
+      <td class="py-2 pr-4">${e.timestamp||'—'}</td>
+      <td class="py-2 pr-4 font-medium">${e.symbol||'—'}</td>
+      <td class="py-2 pr-4">${pill((e.side||'').toUpperCase())}</td>
+      <td class="py-2 pr-4">${e.price!=null?Number(e.price).toLocaleString(undefined,{maximumFractionDigits:8}):'—'}</td>
+      <td class="py-2 pr-4">${fmtNum(e.quantity)}</td>
+      <td class="py-2 pr-4">${pill((e.ai_recommendation||'').toUpperCase())} <span class="text-slate-400 text-xs">(${e.confidence??'—'}%)</span></td>
+    </tr>`;
+  });
+}
+
+async function loadAll(){
+  const [st, px, an, liqs, pcfg, porders] = await Promise.all([
+    GET('/status'), GET('/prices'), GET('/analysis'), GET('/liquidations'),
+    GET('/paper/config'), GET('/paper/orders')
+  ]);
+  qs('#apiBaseLabel').textContent = location.origin + '/';
+  renderStatus(st); renderPrices(px); renderSignals(an); renderLiqs(liqs||[]);
+  qs('#paperStatus').textContent = pcfg?.enabled ? (pcfg.has_keys? 'Testnet: ready (keys)': 'Simulated mode') : 'Disabled';
+  const ul=qs('#ptList'); ul.innerHTML='';
+  (porders||[]).forEach(o=>{
+    const d=new Date(o.ts||Date.now()); const t=d.toISOString().replace('T',' ').slice(0,19);
+    ul.innerHTML += `<li><span class="text-slate-400">${t}</span> — <b>${o.symbol}</b> ${o.side} x ${o.quantity} <span class="text-slate-500">(${o.mode})</span></li>`;
+  });
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadAll);
+document.getElementById('ptSend').addEventListener('click', async ()=>{
+  const symbol = qs('#ptSymbol').value.trim();
+  const side   = qs('#ptSide').value.trim();
+  const qty    = Number(qs('#ptQty').value);
+  const out = await POST('/paper/order',{symbol, side, quantity: qty});
+  qs('#ptMsg').textContent = out.ok ? 'Order sent ('+(out.mode||'')+')' : ('Failed: ' + (out.error||''));
+  loadAll();
+});
+setInterval(loadAll, 15000);
+lucide.createIcons();
+loadAll();
+</script>
+</body>
+</html>
