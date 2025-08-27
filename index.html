@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Binance Liquidation Monitor — Live</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -35,15 +36,19 @@
     <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
       <span class="text-slate-500 text-sm">Uptime</span><i data-lucide="activity" class="w-4 h-4 text-indigo-600"></i></div>
       <div id="uptime" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+
     <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
       <span class="text-slate-500 text-sm">Processed Today</span><i data-lucide="cpu" class="w-4 h-4 text-indigo-600"></i></div>
       <div id="processed" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+
     <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
       <span class="text-slate-500 text-sm">AI Accuracy</span><i data-lucide="sparkles" class="w-4 h-4 text-indigo-600"></i></div>
       <div id="aiAcc" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+
     <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
       <span class="text-slate-500 text-sm">Provider</span><i data-lucide="globe" class="w-4 h-4 text-indigo-600"></i></div>
       <div id="provider" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
+
     <div class="card p-5 bg-white/80"><div class="flex items-center justify-between">
       <span class="text-slate-500 text-sm">Telegram Delivery</span><i data-lucide="send" class="w-4 h-4 text-indigo-600"></i></div>
       <div id="tg" class="mt-2 text-2xl font-semibold skeleton">&nbsp;</div></div>
@@ -85,48 +90,26 @@
     </div>
   </section>
 
-  <section class="mt-6 card p-5 bg-white/80">
-    <div class="flex items-center justify-between mb-2">
-      <h2 class="font-semibold">Paper Trading (Testnet)</h2>
-      <span id="paperStatus" class="text-xs text-slate-500">—</span>
-    </div>
-    <div class="grid sm:grid-cols-5 gap-3">
-      <select id="ptSymbol" class="p-2 rounded-lg border bg-white">
-        <option>XRPUSDT</option><option>DOGEUSDT</option><option>PEPEUSDT</option>
-      </select>
-      <select id="ptSide" class="p-2 rounded-lg border bg-white">
-        <option>BUY</option><option>SELL</option>
-      </select>
-      <input id="ptQty" type="number" step="1" min="1" class="p-2 rounded-lg border bg-white" placeholder="Quantity"/>
-      <button id="ptSend" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Send</button>
-      <div id="ptMsg" class="text-sm text-slate-500"></div>
-    </div>
-    <div class="mt-3">
-      <h3 class="font-semibold mb-1 text-sm">Recent Paper Orders</h3>
-      <ul id="ptList" class="text-sm space-y-1"></ul>
-    </div>
-  </section>
-
 </div>
 
 <script>
-  // >>>>>>>>> SET API BASE DI SINI <<<<<<<<<
-  const API_BASE = "https://essay-tongue-base-clinical.trycloudflare.com";
+  // ======== SET DOMAIN BACKEND DI SINI ========
+  // kalau UI diserve dari GitHub Pages: isi dengan domain Cloudflare Tunnel kamu
+  // contoh: const API_BASE = "https://api.kamudomain.com";
+  // kalau UI diserve dari backend yang sama: const API_BASE = "";
+  const API_BASE = "https://api.kamudomain.com";
 
   const qs=(s,el=document)=>el.querySelector(s);
   const fmtNum=n=>n==null?'—':new Intl.NumberFormat().format(n);
-  const pill=txt=>{const t={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
-    return `<span class="badge ${t[txt]||'bg-slate-2 00 text-slate-700'}">${txt||''}</span>`};
+  const pill=txt=>{
+    const tones={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
+    return `<span class="badge ${tones[txt]||'bg-slate-200 text-slate-700'}">${txt||''}</span>`;
+  };
 
+  // prefix semua request ke API_BASE
   async function GET(path){
     const url = API_BASE + path;
     const r = await fetch(url,{headers:{'Accept':'application/json'}, cache:'no-store'});
-    if(!r.ok) throw new Error(url+' -> '+r.status);
-    return r.json();
-  }
-  async function POST(path, body){
-    const url = API_BASE + path;
-    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok) throw new Error(url+' -> '+r.status);
     return r.json();
   }
@@ -135,19 +118,20 @@
     qs('#uptime').classList.remove('skeleton'); qs('#uptime').textContent=st.uptime||'—';
     qs('#processed').classList.remove('skeleton'); qs('#processed').textContent=fmtNum(st.processed_today);
     qs('#aiAcc').classList.remove('skeleton'); qs('#aiAcc').textContent=(st.ai_accuracy??'—')+'%';
-    qs('#provider').classList.remove('skeleton'); qs('#provider').textContent='binance';
-    qs('#tg').classList.remove('skeleton'); qs('#tg').textContent='99%';
+    qs('#provider').classList.remove('skeleton'); qs('#provider').textContent = st.provider||'—';
+    qs('#tg').classList.remove('skeleton'); qs('#tg').textContent=(st.telegram_delivery??'—')+'%';
+    qs('#apiBaseLabel').textContent = (API_BASE||location.origin) + '/';
   }
 
   function renderPrices(px){
     qs('#provTiny').textContent = px.provider || '—';
     const wrap=qs('#prices'); wrap.innerHTML='';
-    const order=['XRPUSDT','DOGEUSDT','PEPEUSDT'];
-    const fmt=v=> (v==null?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:8}));
-    order.forEach(sym=>{
+    const fmt = n => (n==null?'—':Number(n).toLocaleString(undefined,{maximumFractionDigits:8}));
+    ['XRPUSDT','DOGEUSDT','PEPEUSDT'].forEach(sym=>{
       wrap.innerHTML += `<div class="rounded-xl bg-indigo-50 p-3">
         <div class="text-slate-500 text-xs">${sym}</div>
-        <div class="text-lg font-semibold">$ ${fmt(px.prices?.[sym])}</div></div>`;
+        <div class="text-lg font-semibold">$ ${fmt(px.prices?.[sym])}</div>
+      </div>`;
     });
   }
 
@@ -159,7 +143,8 @@
       wrap.innerHTML += `<div class="rounded-xl bg-white p-3 shadow">
         <div class="text-slate-500 text-xs mb-1">${sym}</div>
         <div class="text-lg font-semibold">${s.recommendation||'—'}</div>
-        <div class="text-slate-500 text-xs">Conf: ${s.confidence??'—'}%</div></div>`;
+        <div class="text-slate-500 text-xs">Conf: ${s.confidence??'—'}%</div>
+      </div>`;
     });
   }
 
@@ -179,11 +164,15 @@
   }
 
   async function loadAll(){
-    const [st, px, an, liqs] = await Promise.all([
-      GET('/status'), GET('/prices'), GET('/analysis'), GET('/liquidations')
-    ]);
-    qs('#apiBaseLabel').textContent = API_BASE + '/';
-    renderStatus(st); renderPrices(px); renderSignals(an); renderLiqs(liqs||[]);
+    try{
+      const [st, px, an, liqs] = await Promise.all([
+        GET('/status'), GET('/prices'), GET('/analysis'), GET('/liquidations')
+      ]);
+      renderStatus(st); renderPrices(px); renderSignals(an); renderLiqs(liqs||[]);
+    }catch(e){
+      console.error(e);
+      alert("Gagal mengambil data API. Cek API_BASE & CORS.");
+    }
   }
 
   document.getElementById('refreshBtn').addEventListener('click', loadAll);
