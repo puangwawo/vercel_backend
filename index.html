@@ -5,9 +5,38 @@
 <title>Binance Liquidation Monitor — Live</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-  const API_BASE = "https://essay-tongue-base-clinical.trycloudflare.com";  // <- paste URL dari Cell 3
-  // ... (fungsi GET/POST menggunakan API_BASE seperti yang sudah kita buat sebelumnya)
+<script>
+  // Ganti dengan URL dari cell Cloudflare
+  const API_BASE = "https://essay-tongue-base-clinical.trycloudflare.com";
+
+  const qs = (s, el=document)=>el.querySelector(s);
+  const fmtNum = n=>n==null?'—':new Intl.NumberFormat().format(n);
+  const pill = txt=>{
+    const tones={BUY:'bg-emerald-100 text-emerald-700',SELL:'bg-rose-100 text-rose-700',HOLD:'bg-amber-100 text-amber-700'};
+    return `<span class="badge ${tones[txt]||'bg-slate-200 text-slate-700'}">${txt||''}</span>`;
+  };
+
+  // ⬇️ penting: prefix semua request ke API_BASE
+  async function GET(path){
+    const url = API_BASE + path;
+    const r = await fetch(url, { headers:{'Accept':'application/json'}, cache:'no-store' });
+    if(!r.ok) throw new Error(url+' -> '+r.status);
+    return r.json();
+  }
+  async function POST(path, body){
+    const url = API_BASE + path;
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if(!r.ok) throw new Error(url+' -> '+r.status);
+    return r.json();
+  }
+
+  // tampilkan base yang dipakai di header kecil
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const el = document.querySelector('#apiBaseLabel');
+    if (el) el.textContent = API_BASE + '/';
+  });
+</script>
+
 <style>
   .card{border-radius:1rem;box-shadow:0 10px 30px rgba(0,0,0,.06)}
   .badge{border-radius:9999px;padding:.25rem .6rem;font-size:.75rem}
